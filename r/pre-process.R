@@ -11,10 +11,11 @@ library(janitor)
 # load data
 siren_raw <- read.dta13("~/coviddata/SIREN_Interim_20210921_v2.dta") %>%
     clean_names() %>%
-    rename(reinfection_pcr_date = reinfection_pc_rdate,
-           primary_pcr_date = primary_pc_rdate,
-           last_pcr_neg_date = last_pc_rneg_date
-           )
+    rename(
+        reinfection_pcr_date = reinfection_pc_rdate,
+        primary_pcr_date = primary_pc_rdate,
+        last_pcr_neg_date = last_pc_rneg_date
+    )
 
 # determine the start date for the analysis
 start_time <- min(siren_raw$vaccine_date1, na.rm = TRUE) - 1 # this date is 7th December
@@ -36,15 +37,18 @@ siren_cohort <- siren_raw %>%
 siren <- siren_cohort %>%
     # allow people to re-enter the cohort after primary infection
     bind_rows(
-        siren_cohort %>% filter(cohort_final==0, !is.na(primary_pcr_date),
-                                (primary_pcr_date<vaccine_date1 | is.na(vaccine_date1)),
-                                ar<primary_pcr_date) %>%
-        mutate(cohort_final = 1,
-               study_id = paste0(study_id,"_2"),
-               ar = primary_pcr_date,
-               start_date_pos_c = primary_pcr_date
-               )
+        siren_cohort %>% filter(
+            cohort_final == 0, !is.na(primary_pcr_date),
+            (primary_pcr_date < vaccine_date1 | is.na(vaccine_date1)),
+            ar < primary_pcr_date
         ) %>%
+            mutate(
+                cohort_final = 1,
+                study_id = paste0(study_id, "_2"),
+                ar = primary_pcr_date,
+                start_date_pos_c = primary_pcr_date
+            )
+    ) %>%
     mutate(
         event = case_when(
             !is.na(primary_pcr_date) & primary_pcr_date > ar & cohort_final == 0 ~ 1,
@@ -70,18 +74,15 @@ siren <- siren_cohort %>%
 siren <- siren %>%
     mutate(
         start_date_pos_c = start_date_pos_c - start_time,
-        time= time - start_time,
+        time = time - start_time,
         ar = ar - start_time,
-
-        vd1= vaccine_date1 - start_time,
+        vd1 = vaccine_date1 - start_time,
         vd2 = vaccine_date2 - start_time,
-
-        follow_up_time=time,
-
-        region=factor(region),
+        follow_up_time = time,
+        region = factor(region),
         agegr2 = factor(agegr2),
-        gender=factor(gender),
-        ethnic_gr=factor(ethnic_gr),
+        gender = factor(gender),
+        ethnic_gr = factor(ethnic_gr),
         work_exposure_frequency = factor(work_exposure_frequency),
         occ_set_cat = factor(occ_set_cat)
     )
