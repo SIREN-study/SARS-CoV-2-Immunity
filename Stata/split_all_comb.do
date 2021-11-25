@@ -48,7 +48,6 @@ by StudyId: generate n1 = _n
 by StudyId: generate N = _N
 replace time=_t if n1!=N
 replace event=0 if n1!=N
-list StudyId vd1 _t0 _t  time vd2 d1 _st if StudyId=="R0A10032"
 gen Enrolment= Date_Enrolled - start_time
 drop fail N n1 _t0 _t _st 
 

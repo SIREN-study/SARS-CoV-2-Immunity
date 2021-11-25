@@ -58,6 +58,7 @@ label values DoseSchedule relabel_schedules
 *First we focus on people who are in the negative cohort (no evidence of previous infection) on December 7th.
 *Among these poeple, those with a PCR-confirmed primary infection after the time they are at risk are assigned event=1.
 generate event=1 if PrimaryPCRdate !=. & PrimaryPCRdate > ar & cohort_final==0
+
 *And the data of this primary infection is the time-to-event for them.
 gen time = PrimaryPCRdate if event==1
 
@@ -66,6 +67,7 @@ gen time = PrimaryPCRdate if event==1
 
 *Among these people, those with a PCR-confirmed reinfection are assigned event=1
 replace event=1 if ReinfectionPCRdate !=. & ReinfectionPCRdate >= ar & cohort_final==1
+
 *And the date of this PCR reinfection is their time-to-event.
 replace time = ReinfectionPCRdate if event==1 & cohort_final==1 & ReinfectionPCRdate >= ar
 
@@ -102,8 +104,10 @@ replace time = LastPCRneg_date if ibv==1 & ReinfectionPCRdate ==. & LastPCRneg_d
 
 *Declare the data as survival data. This is needed to use the stsplit command below, which allow people to move cohorts.
 stset time, id(StudyId) failure(event) origin(time ar)
+
 *If people have ibv=1 (i.e. can contribute to both negative and positive cohort), their observation is splitted into two observations on the day of their primary infection.
 *the variable "after_primary" indicated which pseudo-observation, i.e. after_primary=1 for the follow-up time after primary infection.
+
 stsplit after_primary if(ibv==1), at(0) after(PrimaryPCRdate)
 replace after_primary=after_primary+1
 *IMPORTANT: The splitting command also changed the time-to-event ("time" variable) of the first pseudo-observation (that with after_primary=0) to the argument of after().
@@ -112,6 +116,7 @@ replace after_primary=after_primary+1
 
 *The pseudo-observation after infection is labelled as belonging to the positive cohort.
 replace cohort_final=1 if after_primary==1
+
 *The start date ("start_date_posC") and the time at risk ("ar") of the pseudo-observation after infection becomes the day of primary infection.
 replace start_date_posC = PrimaryPCRdate if after_primary ==1
 replace ar=PrimaryPCRdate if after_primary==1
