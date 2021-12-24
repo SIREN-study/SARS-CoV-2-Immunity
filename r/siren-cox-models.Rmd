@@ -14,174 +14,77 @@ output:
 # libraries
 library(tidyverse)
 library(survival)
+library(finalfit)
+library(flextable)
 
 # load data
 load("~/coviddata/siren_post_processing.RData")
+
 ```
 
 ```{r labels-functions}
 
 # define labels
-ve_label <- tibble(
-    label = c(
-        "Unvaccinated",
-        "Pfizer dose 1, 0-20 days",
-        "Pfizer dose 1, 21-27 days",
-        "Pfizer dose 1, 28-41 days",
-        "Pfizer dose 1, 42-55 days",
-        "Pfizer dose 1, >55 days",
-        "ChAdOx dose 1, 0-20 days",
-        "ChAdOx dose 1, 21-27 days",
-        "ChAdOx dose 1, 28-41 days",
-        "ChAdOx dose 1, 42-55 days",
-        "ChAdOx dose 1, >55 days",
-        "Pfizer long dose 2, 0-13 days",
-        "Pfizer long dose 2, 14-73 days",
-        "Pfizer long dose 2, 74-133 days",
-        "Pfizer long dose 2, 134-193 days",
-        "Pfizer long dose 2, >193 days",
-        "Pfizer short dose 2, 0-13 days",
-        "Pfizer short dose 2, 14-73 days",
-        "Pfizer short dose 2, 74-133 days",
-        "Pfizer short dose 2, 134-193 days",
-        "Pfizer short dose 2, >193 days",
-        "ChAdOx dose 2, 0-13 days",
-        "ChAdOx dose 2, 14-73 days",
-        "ChAdOx dose 2, 74-133 days",
-        "ChAdOx dose 2, >133 days"
-    ),
-    group = rep("Vaccine, dose, schedule", 25)
+ve_label <- c(
+    "Unvaccinated",
+    "Pfizer dose 1, 0-20 days",
+    "Pfizer dose 1, 21-27 days",
+    "Pfizer dose 1, 28-41 days",
+    "Pfizer dose 1, 42-55 days",
+    "Pfizer dose 1, >55 days",
+    "ChAdOx dose 1, 0-20 days",
+    "ChAdOx dose 1, 21-27 days",
+    "ChAdOx dose 1, 28-41 days",
+    "ChAdOx dose 1, 42-55 days",
+    "ChAdOx dose 1, >55 days",
+    "Pfizer long dose 2, 0-13 days",
+    "Pfizer long dose 2, 14-73 days",
+    "Pfizer long dose 2, 74-133 days",
+    "Pfizer long dose 2, 134-193 days",
+    "Pfizer long dose 2, >193 days",
+    "Pfizer short dose 2, 0-13 days",
+    "Pfizer short dose 2, 14-73 days",
+    "Pfizer short dose 2, 74-133 days",
+    "Pfizer short dose 2, 134-193 days",
+    "Pfizer short dose 2, >193 days",
+    "ChAdOx dose 2, 0-13 days",
+    "ChAdOx dose 2, 14-73 days",
+    "ChAdOx dose 2, 74-133 days",
+    "ChAdOx dose 2, >133 days"
 )
 
-dura_label <- tibble(
-    label = c(
-        "Unvaccinated, naive",
-        "Unvaccinated, <3 months",
-        "Unvaccinated, 3-9 months",
-        "Unvaccinated, 9-15 months",
-        "Unvaccinated, >15 months",
-        "Dose 1, naive",
-        "Dose 1, <3 months",
-        "Dose 1, 3-9 months",
-        "Dose 1, 9-15 months",
-        "Dose 1, >15 months",
-        "Dose 2, naive",
-        "Dose 2, <3 months",
-        "Dose 2, 3-9 months",
-        "Dose 2, 9-15 months",
-        "Dose 2, >15 months"
-    ),
-    group = rep("Vaccine, prior infection", 15)
+dura_label <- c(
+    "Unvaccinated, naive",
+    "Dose 1 0-20 days, naive",
+    "Dose 1 21+ days, naive",
+    "Dose 2 0-13 days, naive",
+    "Dose 2 14-73 days, naive",
+    "Dose 2 73-133 days, naive",
+    "Dose 2 133-193 days, naive",
+    "Dose 2 193+ days, naive",
+    "Unvaccinated, <1yr",
+    "Dose 1 0-20 days, <1yr",
+    "Dose 1 21+ days, <1yr",
+    "Dose 2 0-13 days, <1yr",
+    "Dose 2 14-73 days, <1yr",
+    "Dose 2 73-133 days, <1yr",
+    "Dose 2 133-193 days, <1yr",
+    "Dose 2 193+ days, <1yr",
+    "Unvaccinated, >1yr",
+    "Dose 1 0-20 days, >1yr",
+    "Dose 1 21+ days, >1yr",
+    "Dose 2 0-13 days, >1yr",
+    "Dose 2 14-73 days, >1yr",
+    "Dose 2 73-133 days, >1yr",
+    "Dose 2 133-193 days, >1yr",
+    "Dose 2 193+ days, >1yr"
 )
 
-labels_all <- tibble(
-    label = c(
-        "East Midlands",
-        "East of England",
-        "London",
-        "North East",
-        "North West",
-        "South East",
-        "South West",
-        "West Midlands",
-        "Yorkshire and Humber",
-        "Scotland",
-        "Northern Ireland",
-        "Wales",
-        "<25",
-        "25-34",
-        "35-44",
-        "45-54",
-        "55-64",
-        "65+",
-        "Unknown age",
-        "Male",
-        "Female",
-        "Non-binary",
-        "Unknown gender",
-        "White",
-        "Mixed",
-        "Asian",
-        "Black",
-        "Other ethnicity",
-        "Unknown ethnicity",
-        "Every day",
-        "Once a week",
-        "Once a month",
-        "Less than once a month",
-        "Never",
-        "Office",
-        "Patient facing (non-clinical)",
-        "Outpatient",
-        "Maternity,Labour Ward",
-        "Ambulance,Emergency Department,Inpatient",
-        "Intensive care",
-        "Theatres",
-        "Other"
-    ),
-    group = c(
-        rep("Region", 12),
-        rep("Age group", 7),
-        rep("Gender", 4),
-        rep("Ethnicity", 6),
-        rep("Work exposure", 5),
-        rep("Occupation", 8)
-    )
-)
-
-# define functions
-results_table <- function(cox_model, title) {
-    labels %>%
-        full_join(
-            tidy_siren_cox %>%
-                bind_cols(levels %>% select(label)),
-            by = "label"
-        ) %>%
-        mutate(estimate = if_else(is.na(estimate), 1, estimate)) %>%
-        select(label, estimate, conf.low, conf.high) %>%
-        knitr::kable(caption = title)
-}
-
-results_figure <- function(cox_model, title) {
-    labels %>%
-        full_join(
-            tidy_siren_cox %>%
-                bind_cols(levels %>% select(label)),
-            by = "label"
-        ) %>%
-        mutate(
-            estimate = if_else(is.na(estimate), 1, estimate),
-            label = factor(label, levels = labels$label),
-            ref = if_else(estimate == 1, "ref", "not ref")
-        ) %>%
-        ggplot() +
-        aes(y = label, x = estimate, xmin = conf.low, xmax = conf.high, shape = ref, color = group) +
-        geom_point(size = 1.5) +
-        geom_errorbarh(height = .3) +
-        scale_x_continuous(name = "Hazard ratio", trans = "log10") +
-        scale_y_discrete(limits = rev, name = "") +
-        geom_vline(xintercept = 1, color = "black", linetype = "dashed", alpha = .5) +
-        labs(
-            subtitle = title,
-            caption = "Shown on log scale, hollow points indicate reference group"
-        ) +
-        theme_minimal() +
-        scale_shape_manual(values = c(19, 1)) +
-        theme(legend.position = "none") +
-        facet_grid(group ~ ., space = "free_y", scales = "free_y", switch = "y") +
-        theme(panel.spacing = unit(1, "lines")) +
-        theme(
-            strip.placement = "outside",
-            strip.background = element_rect(fill = NA, colour = NA),
-            panel.spacing = unit(0.3, "cm"), axis.title.y = element_blank()
-        ) +
-        theme(text = element_text(size = 13))
-}
 ```
 
 This document presents Cox Proportional Hazards estimates for the SIREN interim analysis dataset (SIREN_Interim_20210921_v2.dta). This analysis replicates a set of Stata analyses, thereby providing independent verification.
 
-Survival analysis datasets with multiple intervals for each participant and corresponding covariate values were prepared using the `survival` package (Therneau T (2021). _A Package for Survival Analysis in R_.)
+Survival analysis datasets with multiple intervals for each participant and corresponding covariate values were prepared using the `survival` package (_Therneau T_) and formatted using the `finalfit` package (_Harrison E, Drake T, and Ots R_).
 
 Minor differences exist between the Stata and `survival` package implementations of the Cox Proportional Hazards model:
 
@@ -197,49 +100,53 @@ These categories were further sub-divided according to vaccine: Pfizer long, Pfi
 
 Follow-up time for those within 90 days of a primary infection was removed, as was the category "ChAdOx dose 2, 0-13 days" due to insufficient observations.
 
-```{r ve, warning=FALSE}
+```{r ve, fig.width=10, warning=FALSE, message=FALSE}
 
-# vaccine effectiveness (unadjusted)
-siren_cox <- coxph(Surv(tstart, tstop, event) ~ vaccine_cat,
-    id = study_id,
-    cluster = trust_code,
-    data = split_ve %>% filter(eligible == 1, vaccine_cat != 21)
-)
+# define variables
+dependent = "Surv(tstart, tstop, event)"
+explanatory_uni = "vaccine_cat"
+explanatory_multi = c("vaccine_cat", "gender", "ethnic_gr", "strata(region)", "strata(agegr2)", "strata(work_exposure_frequency)", "strata(occ_set_cat)", "cluster(trust_code)")
 
-tidy_siren_cox <- broom::tidy(siren_cox, conf.int = TRUE, exponentiate = TRUE)
+# format data
+model_data <- split_ve %>% mutate(vaccine_cat=factor(vaccine_cat, labels = ve_label)) %>% 
+    filter(eligible == 1, primary_inf==0, vaccine_cat !="ChAdOx dose 2, 0-13 days") %>% 
+    mutate(vaccine_cat = fct_drop(vaccine_cat))
 
-labels <- ve_label
-levels <- labels %>% filter(!label %in% c("Unvaccinated"))
+# kaplan meier survival curves
+survfit(as.formula(paste0(dependent, "~", explanatory_uni)), 
+                  data = model_data) %>% 
+    broom::tidy() %>% 
+    ggplot()+
+    aes(time, estimate, color = strata)+
+    geom_step()+
+    theme_minimal()
 
-results_table(tidy_siren_cox, title = "Unadjusted model")
-results_figure(tidy_siren_cox, title = "Unadjusted model")
-```
+# test proportional hazards assumption
+# not significant - indicates proportional hazards assumption holds
+model_data %>% 
+    coxphmulti(dependent, explanatory_uni) %>% 
+    cox.zph()
 
-```{r ve-adjusted, fig.width=10, fig.height=10, warning=FALSE}
+model_data %>% 
+    coxphmulti(dependent, explanatory_multi) %>% 
+    cox.zph()
 
-# vaccine effectiveness (adjusted)
-siren_cox <- coxph(Surv(tstart, tstop, event) ~ vaccine_cat + primary_inf + region + agegr2 + gender + ethnic_gr + work_exposure_frequency + occ_set_cat,
-    id = study_id,
-    cluster = trust_code,
-    data = split_ve %>% filter(eligible == 1, vaccine_cat != 21)
-)
-
-tidy_siren_cox <- broom::tidy(siren_cox, conf.int = TRUE, exponentiate = TRUE)
-
-labels <- ve_label %>%
-    rbind(tibble(
-        label = c("Naive", "0-3 months", "3-9 months", "9-15 months", ">15 months"),
-        group = rep("Primary infection", 5)
-    )) %>%
-    rbind(labels_all)
-
-levels <- labels %>% filter(!label %in% c("Unvaccinated", "Naive", "East Midlands", "<25", "Male", "White", "Every day", "Office"))
-
-results_table(tidy_siren_cox, title = "Adjusted model")
-results_figure(tidy_siren_cox, title = "Adjusted model")
+# table, finalfit provides both unadjusted and adjusted hazards
+model_data %>% finalfit(dependent, explanatory_multi) %>% 
+    flextable() %>% 
+    autofit()
 
 # if we wish to match the standard error calculation from Stata:
 # sqrt(diag(vcov(siren_cox))* (135/134))
+
+```
+
+```{r ve-fig, fig.height=10, fig.width=10, warning=FALSE, message=FALSE}
+
+# figure
+model_data %>% 
+    hr_plot(dependent, explanatory_multi, dependent_label = "Survival")
+
 ```
 
 
@@ -251,40 +158,51 @@ The primary infection categories were: naive, 3-9 months, 9-15 months, and >15 m
 
 Those within 90 days of a primary infection were excluded.
 
-```{r durability, warning=FALSE}
+```{r dura, fig.width=10, warning=FALSE, message=FALSE}
 
 # durability of protection (unadjusted)
-siren_cox <- coxph(Surv(tstart, tstop, event) ~ primary_cat,
-    id = study_id,
-    cluster = trust_code,
-    data = split_dura %>% filter(eligible == 1)
-)
+dependent = "Surv(tstart, tstop, event)"
+explanatory_uni = "primary_cat"
+explanatory_multi = c("primary_cat", "strata(region)", "strata(agegr2)", "gender", "ethnic_gr", "strata(work_exposure_frequency)", "strata(occ_set_cat)", "cluster(trust_code)")
 
-tidy_siren_cox <- broom::tidy(siren_cox, conf.int = TRUE, exponentiate = TRUE)
+# format data
+model_data <- split_dura %>% 
+    mutate(primary_cat=factor(primary_cat, labels = dura_label)) %>% 
+    filter(eligible == 1,  (is.na(vaccine_name2) | vaccine_name2!=2), primary_cat != "Dose 1 0-20 days, >1yr") %>% 
+    mutate(primary_cat = fct_drop(primary_cat))
 
-labels <- dura_label
-levels <- labels %>% filter(!label %in% c("Unvaccinated, naive"))
+# kaplan meier survival curves
+survfit(as.formula(paste0(dependent, "~", explanatory_uni)), 
+                  data = model_data) %>% 
+    broom::tidy() %>% 
+    ggplot()+
+    aes(time, estimate, color = strata)+
+    geom_step()+
+    theme_minimal()
 
-results_table(tidy_siren_cox, title = "Unadjusted model")
-results_figure(tidy_siren_cox, title = "Unadjusted model")
+# test proportional hazards assumption
+# significant - indicates proportional hazards assumption does not hold
+model_data %>% 
+    coxphmulti(dependent, explanatory_uni) %>% 
+    cox.zph()
+
+model_data %>% 
+    coxphmulti(dependent, explanatory_multi) %>% 
+    cox.zph()
+
+# table, finalfit provides both unadjusted and adjusted hazards
+model_data %>% finalfit(dependent, explanatory_multi) %>% 
+    flextable() %>% 
+    autofit()
+
 ```
 
-```{r durability-adjusted, fig.width=10, fig.height=10, warning=FALSE}
+```{r dura-fig, fig.height=10, fig.width=10, warning=FALSE, message=FALSE}
 
-# durability of protection (adjusted)
-siren_cox <- coxph(Surv(tstart, tstop, event) ~ primary_cat + region + agegr2 + gender + ethnic_gr + work_exposure_frequency + occ_set_cat,
-    id = study_id,
-    cluster = trust_code,
-    data = split_dura %>% filter(eligible == 1)
-)
+# figure
+model_data %>% 
+    hr_plot(dependent, explanatory_multi, dependent_label = "Survival")
 
-tidy_siren_cox <- broom::tidy(siren_cox, conf.int = TRUE, exponentiate = TRUE)
-
-labels <- dura_label %>% rbind(labels_all)
-levels <- labels %>% filter(!label %in% c("Unvaccinated, naive", "East Midlands", "<25", "Male", "White", "Every day", "Office"))
-
-results_table(tidy_siren_cox, title = "Adjusted model")
-results_figure(tidy_siren_cox, title = "Adjusted model")
 ```
 
 ## Session info

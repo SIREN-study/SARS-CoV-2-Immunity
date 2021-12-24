@@ -3,19 +3,25 @@
 # Imports and cleans the SIREN data and generates datasets
 #
 
+here::i_am("r/pre-process.R")
+
 # libraries
 library(readstata13)
 library(tidyverse)
 library(janitor)
+library(here)
 
 # load data
-siren_raw <- read.dta13("~/coviddata/SIREN_Interim_20210921_v2.dta") %>%
+siren_raw <- read.dta13(here("data/SIREN_Interim_20210921_v2.dta")) %>%
     clean_names() %>%
     rename(
         reinfection_pcr_date = reinfection_pc_rdate,
         primary_pcr_date = primary_pc_rdate,
         last_pcr_neg_date = last_pc_rneg_date
     )
+
+age_group <- read.dta13(here("data/AgeGroup_LookUp.dta")) %>%
+    clean_names()
 
 # determine the start date for the analysis
 start_time <- min(siren_raw$vaccine_date1, na.rm = TRUE) - 1 # this date is 7th December
@@ -72,6 +78,7 @@ siren <- siren_cohort %>%
 
 # generate relative time variables to use in Cox proportional hazards model
 siren <- siren %>%
+    left_join(age_group %>% select(study_id, linked_age = agegr2), by="study_id") %>%
     mutate(
         start_date_pos_c = start_date_pos_c - start_time,
         time = time - start_time,
@@ -79,12 +86,18 @@ siren <- siren %>%
         vd1 = vaccine_date1 - start_time,
         vd2 = vaccine_date2 - start_time,
         follow_up_time = time,
-        region = factor(region),
-        agegr2 = factor(agegr2),
-        gender = factor(gender),
-        ethnic_gr = factor(ethnic_gr),
-        work_exposure_frequency = factor(work_exposure_frequency),
-        occ_set_cat = factor(occ_set_cat)
+        region = factor(region, labels = c("East Midlands","East of England","London","North East",
+                                           "North West","South East","South West","West Midlands",
+                                           "Yorkshire and Humber","Scotland","Northern Ireland","Wales")),
+        linked_age = factor(linked_age, labels = c("<25","25-34","35-44","45-54","55-64","65+")),
+        agegr2 = factor(agegr2, labels = c("<25","25-34","35-44","45-54","55-64","65+","Unknown age")),
+        agegr2 = if_else(agegr2=="Unknown age", linked_age, agegr2),
+        gender = factor(gender, labels = c("Male","Female","Non-binary","Unknown gender")),
+        ethnic_gr = factor(ethnic_gr, labels = c("White","Mixed","Asian","Black","Other ethnicity","Unknown ethnicity")),
+        work_exposure_frequency = factor(work_exposure_frequency, labels = c("Every day","Once a week","Once a month","Less than once a month","Never")),
+        occ_set_cat = factor(occ_set_cat, labels = c("Office","Patient facing (non-clinical)","Outpatient",
+                                                     "Maternity,Labour Ward","Ambulance,Emergency Department,Inpatient",
+                                                     "Intensive care","Theatres","Other"))
     )
 
 siren %>% count() # n = 36668 records

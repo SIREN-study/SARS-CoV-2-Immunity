@@ -100,7 +100,8 @@ split_ve <- tmerge(
 
 # check categories correctly assigned
 split_ve %>%
-    filter(eligible == 1) %>%
+    filter(eligible == 1, primary_inf == 0) %>%
+    distinct(study_id, vaccine_cat) %>% # uncomment for participant numbers
     select(vaccine_cat) %>%
     table(useNA = "ifany")
 
@@ -109,7 +110,7 @@ split_ve %>%
 
 ## time splits:
 ## 1. pre-vaccination, dose 1, dose 2
-## 2. at(0 90 273 454) after(primary_inf)
+## 2. at(0 90 365) after(primary_inf)
 
 split_dura <- tmerge(
     data1 = siren,
@@ -120,10 +121,17 @@ split_dura <- tmerge(
     eligible = tdc(ar),
     primary_inf = cumtdc(start_date_pos_c),
     primary_inf = cumtdc(start_date_pos_c + 90),
-    primary_inf = cumtdc(start_date_pos_c + 273),
-    primary_inf = cumtdc(start_date_pos_c + 454),
+    primary_inf = cumtdc(start_date_pos_c + 365),
     vaccine = event(vd1, rep(1, len)),
-    vaccine = event(vd2, rep(2, len))
+    vaccine = event(if_else(vd1 + 20 < vd2 & !is.na(vd2), vd1 + 20, NA_real_), rep(2, len)),
+    vaccine = event(if_else(is.na(vd2), vd1 + 20, NA_real_), rep(2, len)), # to deal with the vd2==NA case
+    vaccine = event(if_else(vd1 + 80 < vd2 & !is.na(vd2), vd1 + 80, NA_real_), rep(3, len)),
+    vaccine = event(if_else(is.na(vd2), vd1 + 80, NA_real_), rep(3, len)), # to deal with the vd2==NA case
+    vaccine = event(vd2, rep(4, len)),
+    vaccine = event(vd2 + 13, rep(5, len)),
+    vaccine = event(vd2 + 73, rep(6, len)),
+    vaccine = event(vd2 + 133, rep(7, len)),
+    vaccine = event(vd2 + 193, rep(8, len))
 ) %>%
     group_by(study_id) %>%
     # carry over the 0 vaccine status
@@ -133,8 +141,12 @@ split_dura <- tmerge(
         vaccine = if_else(vaccine == 0, lag(vaccine), vaccine),
         vaccine = if_else(vaccine == 0, lag(vaccine), vaccine),
         vaccine = if_else(is.na(vaccine), 0, vaccine),
-        primary_cat = (vaccine * 5) + primary_inf,
-        primary_cat = factor(primary_cat, levels = c(0:14))
+        # remove the third vaccine state
+        vaccine = if_else(vaccine == 3, NA_real_, vaccine),
+        vaccine = if_else(vaccine>3, vaccine-1, vaccine),
+        primary_cat = (primary_inf * 8) + vaccine,
+        primary_cat = if_else(primary_cat>15, primary_cat-8, primary_cat),
+        primary_cat = factor(primary_cat, levels = c(0:23))
     ) %>%
     ungroup() %>%
     mutate(
@@ -144,9 +156,9 @@ split_dura <- tmerge(
 
 # check categories correctly assigned
 split_dura %>%
-    filter(eligible == 1) %>%
-    select(primary_inf) %>%
+    filter(eligible == 1, (is.na(vaccine_name2) | vaccine_name2!=2)) %>%
+    distinct(study_id, primary_cat) %>%
+    select(primary_cat) %>%
     table(useNA = "ifany")
-
 
 save(split_ve, split_dura, siren, file = "~/coviddata/siren_post_processing.RData")
