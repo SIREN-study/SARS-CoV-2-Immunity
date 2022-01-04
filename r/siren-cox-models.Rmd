@@ -94,7 +94,7 @@ Minor differences exist between the Stata and `survival` package implementations
 
 ## 1. Vaccine effectiveness
 
-The vaccination categories were: unvaccinated, 0/21/28/42/56 days post-first dose and 0/14/74/134/194 days post-second dose.
+The vaccination categories were: unvaccinated, 0/21/28/42/56 days post-first dose, and 0/14/74/134/194 days post-second dose.
 
 These categories were further sub-divided according to vaccine: Pfizer long, Pfizer short, and ChAdOx.
 
@@ -152,11 +152,11 @@ model_data %>%
 
 ## 2. Durability of protection
 
-The vaccination categories were: unvaccinated, first dose and second dose.
+The vaccination categories were: unvaccinated, 0/21 days post-first dose, and 0/14/74/134/194 days post-second dose.
 
-The primary infection categories were: naive, 3-9 months, 9-15 months, and >15 months since primary infection.
+The primary infection categories were: naive, <1 year, and >1 year since primary infection.
 
-Those within 90 days of a primary infection were excluded.
+Follow-up time for those within 90 days of a primary infection was removed, as was the category "Dose 1 0-20 days, >1yr" due to insufficient observations.
 
 ```{r dura, fig.width=10, warning=FALSE, message=FALSE}
 
