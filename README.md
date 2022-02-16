@@ -1,6 +1,6 @@
 # Effectiveness and durability of protection against future SARS-CoV-2 infection conferred by COVID-19 vaccination and previous infection
 
-This repository contains the Stata and R code used to undertake vaccine effectiveness and durability analyses for the manuscript _Effectiveness and durability of protection against future SARS-CoV-2 infection conferred by COVID-19 vaccination and previous infection; findings from the UK SIREN prospective cohort study March 2020 to September 2021_ 
+This repository contains the Stata and R code used to undertake vaccine effectiveness and durability analyses for the paper "Protection against SARS-CoV-2 after Covid-19 Vaccination and Previous Infection.", published on the New England Journal of Medicine on 16/02/2022.
 
 ## Software versions
 - STATA (version 15.1; StataCorp LLC, College Station, TX, USA) 
